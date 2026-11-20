@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { col } from "../config/db.js";
 import { verifyToken, verifyRenter, verifyOwner, verifyAdmin } from "../middleware/auth.js";
-import { wrap, pageParams } from "../utils/helpers.js";
+import { wrap, pageParams, toObjectId } from "../utils/helpers.js";
 
 const router = Router();
 
@@ -23,5 +23,19 @@ router.get("/owner", verifyToken, verifyOwner, wrap((req, res) => paged({ ownerE
 
 // Admin: every rental
 router.get("/", verifyToken, verifyAdmin, wrap((req, res) => paged({}, req, res)));
+
+// Admin: manage a rental's booking status
+router.patch("/:id/status", verifyToken, verifyAdmin, wrap(async (req, res) => {
+  const _id = toObjectId(req.params.id);
+  const { status } = req.body;
+  if (!_id || !["confirmed", "completed", "cancelled"].includes(status)) {
+    return res.status(400).json({ message: "Invalid booking or status" });
+  }
+  const update = { bookingStatus: status, updatedAt: new Date() };
+  if (status === "completed") update.completedAt = new Date();
+  const r = await (await col("bookings")).updateOne({ _id }, { $set: update });
+  if (!r.matchedCount) return res.status(404).json({ message: "Booking not found" });
+  res.json({ message: `Booking marked ${status}` });
+}));
 
 export default router;
