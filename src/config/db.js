@@ -7,7 +7,18 @@ let indexesReady = false;
 export async function getDb() {
   if (db) return db;
   if (!process.env.MONGODB_URI) throw new Error("MONGODB_URI is not set");
-  client = new MongoClient(process.env.MONGODB_URI);
+  client = new MongoClient(process.env.MONGODB_URI, {
+    maxPoolSize: 5,
+    maxIdleTimeMS: 5000,
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+  });
+  // If the topology ever closes (frozen serverless instance), reconnect on the next request.
+  client.on("topologyClosed", () => {
+    db = undefined;
+    client = undefined;
+    indexesReady = false;
+  });
   await client.connect();
   db = client.db(process.env.DB_NAME || "gearloop");
   if (!indexesReady) {
