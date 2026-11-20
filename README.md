@@ -3,6 +3,7 @@
 REST API for **GearLoop**, an equipment rental marketplace where owners list equipment and customers book it for a chosen period with secure Stripe payments.
 
 - **Live API:** https://gearloop-server-chi.vercel.app
+- **Live site:** https://gearloop-client.vercel.app
 - **Client repository:** https://github.com/morshedux/gearloop-client
 
 ## Key features
